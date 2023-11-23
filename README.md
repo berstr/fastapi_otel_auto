@@ -16,6 +16,7 @@ OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
 OTEL_PYTHON_LOG_LEVEL=info  
 
 
+
 ## CLI
 
 opentelemetry-instrument --traces_exporter console,otlp --metrics_exporter console,otlp --logs_exporter console,otlp uvicorn main:app --host 0.0.0.0 --port 8000
@@ -26,7 +27,7 @@ opentelemetry-instrument --traces_exporter console,otlp --metrics_exporter conso
 
 **Note**: replace X.Y with the image version tags
 
-docker build -t bstransky/fastapi_otel_auto:X.Y .
+docker build --platform linux/amd64,linux/arm64 -t bstransky/fastapi_otel_auto:X.Y .
 
 docker run -dit --rm --name fastapi_otel_auto \\  
 -e OTEL_EXPORTER_OTLP_ENDPOINT \\  
@@ -34,6 +35,7 @@ docker run -dit --rm --name fastapi_otel_auto \\
 -e OTEL_SERVICE_NAME \\  
 -e OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED \\  
 -e OTEL_PYTHON_LOG_LEVEL \\  
+--network="otel-collector-demo" \\    
 -p8000:8000 bstransky/fastapi_otel_auto:X.Y
 
 ----------------------
