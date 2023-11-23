@@ -2,8 +2,6 @@
 .DS_Store
 tmp
 
-otel-collector-config.yaml
-
 __pycache__
 *.py[cod]
 *$py.class
