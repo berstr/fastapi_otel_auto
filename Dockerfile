@@ -1,5 +1,5 @@
 # Use the official Python base image
-FROM python:3.11.5-bookworm
+FROM python:3.9.18-slim-bullseye
 
 # Set the working directory inside the container
 WORKDIR /app

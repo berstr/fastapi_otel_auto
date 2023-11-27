@@ -46,13 +46,46 @@ There are two options, the community ediiton collector or the New Relic Super Ag
 
 ### 1 - New Relic Super Agent (Host Daemon Process)
 
-Always run the super agent as host daemin process, not a container.
+### 1.1 - Pre Installation
+
+Always run the super agent as host daemon process, not a container.
+
+### 1.2 - Installation
 
 See the docs for further info on how to install and configure.  
 
-- [New Relic Super Agent](https://docs-preview.newrelic.com/docs/new-relic-super-agent)
-- [New Relic OTEL Collector (NRDOT)](https://docs-preview.newrelic.com/docs/new-relic-distribution-of-opentelemetry)
+- [New Relic Super Agent](https://docs-preview.newrelic.com/docs/new-relic-super-agent) Installation
+- Further information regarding the included collector can be found here: [New Relic OTEL Collector (NRDOT)](https://docs-preview.newrelic.com/docs/new-relic-distribution-of-opentelemetry)
 
+Note: The API key for the installation command is a User API Key. You can find it in the New Relic UI in the [API Keys](https://one.newrelic.com/launcher/api-keys-ui.api-keys-launcher) section and more info in the
+[docs](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#user-key)
+
+### 1.3 - Post Installation
+
+After the installation, check and verify that the file:
+- /etc/nr-otel-collector/config.yaml  
+
+does not contain ${...} env entries in the exporters:otel section, but the actual values instead.  
+Note that settings via env variables are not being recognized.
+
+Example:
+
+``````
+exporters:
+  logging:
+  otlp:
+    endpoint: https://otlp.eu01.nr-data.net:4317
+    headers:
+      api-key: <New Relic INGEST LICENSE Key>
+``````
+
+- This endpoint setting sends data to EU based accounts from New Relic.  
+See [docs](https://docs.newrelic.com/docs/new-relic-solutions/get-started/networks/#new-relic-endpoints) for New Relic accounts based in the US region.
+
+- See [New Relic INGEST LICENSE Key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#license-key) regarding this key.
+
+
+<br>
 
 
 ### 2 - Community Edition (Docker Container)
@@ -93,11 +126,13 @@ c) - Command to start collector as a container:
 
 ### 1 - Download & Install
 
-git clone  
-create venv  
-source venv  
-pip install -r req...
-
+``````
+git clone  https://github.com/berstr/fastapi_otel_auto.git
+cd fastapi_otel_auto
+python3 venv -m venv
+source venv/bin/activate
+pip install -r requirements
+``````
 
 ### 2 - Common Environment
 
@@ -107,7 +142,7 @@ Here are the common settings across all deployment scenarios:
 - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true  
 - OTEL_PYTHON_LOG_LEVEL=INFO  
 
-The value for OTEL_EXPORTER_OTLP_ENDPOINT is depending on the deployment scenario.
+See further settings in each deployment scenarios.
 
 <br><br>
 
@@ -177,7 +212,7 @@ docker run -dit --rm --name fastapi_otel_auto \
 -e OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED \
 -e OTEL_PYTHON_LOG_LEVEL \
 --network host \
--p8000:8000 bstransky/fastapi_otel_auto:1.0
+-p8000:8000 bstransky/fastapi_otel_auto:latest
 ``````
 
 
@@ -216,7 +251,7 @@ b) - FastAPI App: Environment
 c) - FastAPI App: Startup
 
 ````
-docker run -dit --rm --name fastapi_otel_auto \
+docker run -it --rm --name fastapi_otel_auto \
 -e OTEL_EXPORTER_OTLP_ENDPOINT \
 -e OTEL_SERVICE_NAME \
 -e OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED \
@@ -229,23 +264,28 @@ docker run -dit --rm --name fastapi_otel_auto \
 
 --------------
 
+# Further Super Agent Observability
+
+
+
 # MISC
 
-## Docker Built
+### New Relic Preview Docs
 
-docker build -t bstransky/fastapi_otel_auto:X.Y .
+- [Set up the New Relic super agent](https://docs-preview.newrelic.com/docs/new-relic-super-agent)
 
-latest tag:
+- [New Relic OpenTelemetry collector](https://docs-preview.newrelic.com/docs/new-relic-distribution-of-opentelemetry)
 
-docker tag bstransky/fastapi_otel_auto:X.Y bstransky/fastapi_otel_auto
+- [New Relic Fleet Manager](https://docs-preview.newrelic.com/docs/new-relic-fleet-manager)
 
+### FastAPI Requests
 
+Here are sample requests for the FastAPI service:
 
-## Curl Commands
-
+``````
 curl http://localhost:8000/health
 
 curl http://localhost:8000/external-api
 
 curl http://localhost:8000/rolldice\?player=millivanilla
-
+``````
