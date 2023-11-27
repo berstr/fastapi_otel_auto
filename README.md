@@ -1,18 +1,26 @@
+This Python FastAPI based app sends OTEL data (metrics, traces, logs) either directly of via a collector to New Relic.
+
+NRDOT
+
+e), which forwards it to the New Relic endpoint. This can be the New Relic Super Agent collector, or a community based collector. 
+
+
 # Deployment Scenarios
 
-This README contains the settings for various runtime configurations:
+This README contains the settings for various deployment scenarios:
 
-A) FastAPI app send OTEL data directly to ==> the New Relic OTEL endpoint  
+- A) - FastAPI app runs as docker container  
+    - ==> directly to the New Relic OTEL endpoint  (no collector)
 
-B) FastAPI app sends OTEL data to a collector (in agent mode), which forwards it to the New Relic endpoint. This can be the New Relic Super Agent collector, or a community based collector. 
-- B.1) FastAPI app runs as host process 
-    - ==> Collector runs as docker container (community editon)
-- B.2) FastAPI app runs as docker container
-    - ==> Collector runs as docker container  (community editon)
-- B.3) FastAPI app runs as docker container
-    - ==> Collector runs as host process (New Relic Super Agent)
-- B.4) FastAPI app runs as host process 
+
+- B) - FastAPI app runs as host process 
     - ==> Collector runs as host process  (New Relic Super Agent)
+- C) - FastAPI app runs as docker container
+    - ==> Collector runs as host process (New Relic Super Agent)
+- D) - FastAPI app runs as host process 
+    - ==> Collector runs as docker container (community editon)
+- E) - FastAPI app runs as docker container
+    - ==> Collector runs as docker container  (community editon)
 
 Notes:
 - OTEL Collector agent mode: both FastAPI app and collector run on the same host.
@@ -80,29 +88,36 @@ source venv
 pip install -r req...
 
 
-### 1 - Common Environment
+### 2 - Common Environment
 
 Here are the common settings across all deployment scenarios:
-
-- OTEL_EXPORTER_OTLP_HEADERS=api-key=\<[New Relic ingest license key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#license-key)\>  
+ 
 - OTEL_SERVICE_NAME=fastapi-otel-auto  
 - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true  
 - OTEL_PYTHON_LOG_LEVEL=INFO  
 
 The value for OTEL_EXPORTER_OTLP_ENDPOINT is depending on the deployment scenario.
 
-## 2 - Scenario A
+<br><br>
+
+--------------
+
+# Deployment Scenarios
+
+## Scenario A
 
 FastAPI (host process) ==> New Relic OTEL endpoint
 
-a) - Collector: no use of a collector
+a) - Collector: No use of a collector
 
-b) - Environment:
+b) - FastAPI App: Environment
 
+- See section *FastAPI App -> 2 - Common Environment* for common settings.
+- OTEL_EXPORTER_OTLP_HEADERS=api-key=\<[New Relic ingest license key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#license-key)\> 
 - OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp.eu01.nr-data.net:4317  
   - For New Relic accounts based in the EU region. See the [docs](https://docs.newrelic.com/docs/new-relic-solutions/get-started/networks/#new-relic-endpoints) for further info.  
 
-c) - Command
+c) - Start fastAPI app:
 
 ````
 opentelemetry-instrument \
@@ -112,16 +127,59 @@ opentelemetry-instrument \
   uvicorn main:app --host 0.0.0.0 --port 8000
 ````
 
-## 3 - Scenario B.1
+## Scenario B
+
+FastAPI App (host process) ==> New Relic Super Agent (collector, host daemon process)
+
+a)  Install and run the New Relic Super Agent, see section *OTEL Collector -> New Relic Super Agent (Host Daemon Process)*
+
+b) - FastAPI App: Environment
+
+- See section *FastAPI App -> 2 - Common Environment* for common settings.
+
+c) - Start fastAPI app:
+
+````
+opentelemetry-instrument \
+  --traces_exporter console,otlp \
+  --metrics_exporter console,otlp \
+  --logs_exporter console,otlp \
+  uvicorn main:app --host 0.0.0.0 --port 8000
+````
+
+
+## Scenario C
+
+FastAPI App (container) ==> New Relic Super Agent (collector, host daemon process)
+
+a)  Install and run the New Relic Super Agent, see section *OTEL Collector -> New Relic Super Agent (Host Daemon Process)*
+
+b) - FastAPI App: Environment
+
+- See section *FastAPI App -> 2 - Common Environment* for common settings.
+
+c) - Start fastAPI app as container:
+
+``````
+docker run -dit --rm --name fastapi_otel_auto \
+-e OTEL_SERVICE_NAME \
+-e OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED \
+-e OTEL_PYTHON_LOG_LEVEL \
+--network host \
+-p8000:8000 bstransky/fastapi_otel_auto:1.0
+``````
+
+
+## Scenario D
 
 FastAPI App (host process) ==> Collector (community editon, container)
 
+a) - Collector: start it as a docker container, see section *Community Edition (Docker Container)* above.
 
-a) - Collector: start it as a docker container
+b) - FastAPI App: Environment
 
-b) - Environment:
+- See section *FastAPI App -> 2 - Common Environment* for common settings.
 
-- OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4317  
 
 c) - Command
 
@@ -133,44 +191,50 @@ opentelemetry-instrument \
   uvicorn main:app --host 0.0.0.0 --port 8000
 ````
 
-## 4 - Scenario B.2
+## Scenario E
 
 FastAPI App (container) ==> Collector (community editon, container)
 
-a) - Collector: start it as a docker container
+a) - Collector: start it as a docker container, see section *Community Edition (Docker Container)* above.
 
-b) - Environment:
+b) - FastAPI App: Environment
 
-- OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317  
+- See section *FastAPI App -> 2 - Common Environment* for common settings.
+- OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
 
-c) - Command
+c) - FastAPI App: Startup
 
 ````
-docker run -dit --rm --name fastapi_otel_auto \\  
--e OTEL_EXPORTER_OTLP_ENDPOINT \\  
--e OTEL_EXPORTER_OTLP_HEADERS \\  
--e OTEL_SERVICE_NAME \\  
--e OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED \\  
--e OTEL_PYTHON_LOG_LEVEL \\  
---network="otel-collector" \\  
+docker run -dit --rm --name fastapi_otel_auto \
+-e OTEL_EXPORTER_OTLP_ENDPOINT \
+-e OTEL_SERVICE_NAME \
+-e OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED \
+-e OTEL_PYTHON_LOG_LEVEL \
+--network="otel-collector" \
 -p8000:8000 bstransky/fastapi_otel_auto:latest
 ````
 
+<br><br>
+
+--------------
+
+# MISC
+
+## Docker Built
+
 docker build -t bstransky/fastapi_otel_auto:X.Y .
 
+latest tag:
 
-## 5 - Scenario B.3
-
-FastAPI App (container) ==> Collector (New Relic Super Agent, host daemon process)
-
-a) - Collector: start it as a docker container
-
-b) - Environment:
-
-- OTEL_EXPORTER_OTLP_ENDPOINT=http://????:4317  
+docker tag bstransky/fastapi_otel_auto:X.Y bstransky/fastapi_otel_auto
 
 
 
+## Curl Commands
 
+curl http://localhost:8000/health
 
-  # Further Links
+curl http://localhost:8000/external-api
+
+curl http://localhost:8000/rolldice\?player=millivanilla
+
