@@ -1,9 +1,18 @@
+# Python FastAPI with OTEL
+
 This Python FastAPI based app sends OTEL data (metrics, traces, logs) either directly of via a collector to New Relic.
+The app uses OTEL auto instrumentation for Python, as well as manual instrumentation (traces, metrics)
 
-NRDOT
+The following OTEL collectors will be used:
 
-e), which forwards it to the New Relic endpoint. This can be the New Relic Super Agent collector, or a community based collector. 
+1) The new *New Relic Super Agent*, which includes a New Relic maintained collector distribution (NRDOT). This is part of the New Relic Next Gen architecture, all based on OTEL and OpAMP.
 
+2) OTEL Community based collector distribution.
+
+
+<br><br>
+
+------------
 
 # Deployment Scenarios
 
@@ -23,8 +32,10 @@ This README contains the settings for various deployment scenarios:
     - ==> Collector runs as docker container  (community editon)
 
 Notes:
-- OTEL Collector agent mode: both FastAPI app and collector run on the same host.
+- The OTEL community collector runs in agent mode, i.e. both FastAPI app and collector run on the same host.
 - The New Relic Super Agent Collector runs as a host process, not as a container, and in agent mode - see [docs](https://docs-preview.newrelic.com/docs/new-relic-super-agent).
+
+
 <br><br>
 
 ------------
