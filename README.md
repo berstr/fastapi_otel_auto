@@ -264,13 +264,12 @@ docker run -it --rm --name fastapi_otel_auto \
 
 --------------
 
-# Further Super Agent Observability
-
-
 
 # MISC
 
-### New Relic Preview Docs
+## Further Super Agent Observability
+
+## New Relic Preview Docs
 
 - [Set up the New Relic super agent](https://docs-preview.newrelic.com/docs/new-relic-super-agent)
 
@@ -278,7 +277,7 @@ docker run -it --rm --name fastapi_otel_auto \
 
 - [New Relic Fleet Manager](https://docs-preview.newrelic.com/docs/new-relic-fleet-manager)
 
-### FastAPI Requests
+## FastAPI Requests
 
 Here are sample requests for the FastAPI service:
 

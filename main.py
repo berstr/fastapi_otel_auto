@@ -1,7 +1,10 @@
 
 import os
 import logging
-from fastapi import FastAPI
+import json
+from fastapi import FastAPI, HTTPException
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.responses import PlainTextResponse
 
 import requests
 import random
@@ -19,7 +22,7 @@ roll_counter = meter.create_counter(
     "dice.rolls",
     description="The number of rolls by roll value",
 )
-
+items = {"foo": "The Foo Wrestlers"}
 
 random.seed(54321)
 
@@ -28,6 +31,26 @@ app = FastAPI()
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(str(os.getenv("OTEL_PYTHON_LOG_LEVEL", "INFO")).upper())
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request, exc):
+    current_span = trace.get_current_span()
+    if (current_span is not None) and (current_span.is_recording()):
+        current_span.set_attributes(
+            {
+                "http.status_text": str(exc.detail),
+                "otel.status_description": f"{exc.status_code} / {str(exc.detail)}",
+                "otel.status_code": "ERROR"
+            }
+        )
+    return PlainTextResponse(json.dumps({ "detail" : str(exc.detail) }), status_code=exc.status_code)
+
+@app.get("/items/{id}")
+async def read_item(id: str):
+    logger.info(f'GET /items received - id: {id}')
+    if id not in items:
+        raise HTTPException(status_code=404, detail=f'Item with id:[{id}] not found')
+    return {"item": items[id]}
 
 @app.get("/health")
 def health():
